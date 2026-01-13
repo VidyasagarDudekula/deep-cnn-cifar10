@@ -26,12 +26,17 @@ class CNNModel(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3) #[B, 128, 29, 29]
         self.relu2 = nn.ReLU()
         self.b_norm2 = nn.BatchNorm2d(128)
-        self.pooling1 = nn.MaxPool2d(kernel_size=3, stride=3) # [B, 128, 9, 9]
+        self.pooling1 = nn.AvgPool2d(kernel_size=3, stride=3) # [B, 128, 9, 9]
         self.dp2 = nn.Dropout(0.1)
 
         self.flatten = nn.Flatten(start_dim=1, end_dim=-1) # [B, 128*9*9]
-        self.hidden1 = nn.Linear(in_features=128*9*9, out_features=500)
-        self.proj = nn.Linear(in_features=500, out_features=10)
+        self.hidden1 = nn.Linear(in_features=128*9*9, out_features=100)
+        self.layer_norm1 = nn.LayerNorm(100)
+        self.dp3 = nn.Dropout(0.1)
+        self.hidden2 = nn.Linear(in_features=100, out_features=50)
+        self.layer_norm2 = nn.LayerNorm(50)
+        self.dp4 = nn.Dropout(0.1)
+        self.proj = nn.Linear(in_features=50, out_features=10)
     
     def forward(self, x):
         x = self.conv1(x)
@@ -45,13 +50,17 @@ class CNNModel(nn.Module):
         x = self.dp2(x)
         x = self.flatten(x)
         x = self.hidden1(x)
+        x = self.layer_norm1(x)
+        x = self.dp3(x)
+        x = self.hidden2(x)
+        x = self.layer_norm2(x)
+        x = self.dp4(x)
         out = self.proj(x)
         return out
 
 
 
 def validation_loss(model, target_data):
-    target_data = val_dataloader
     with torch.no_grad():
         model.eval()
         lossi = []
@@ -65,7 +74,7 @@ def validation_loss(model, target_data):
             probs = lSoftmax(out)
             loss = F.cross_entropy(out, yb.view(-1))
             indices = torch.argmax(probs, dim=-1)
-            accuracy += (indices == yb).sum().item()
+            accuracy += (indices == yb.view(-1)).sum().item()
             b_count += yb.size(0)
             lossi.append(loss.item())
             xb = xb.to('cpu')
@@ -80,19 +89,19 @@ def validation_loss(model, target_data):
 
 
 if __name__ == '__main__':
-    train_dataloader, val_dataloader = get_data_loaders(download=True)
+    train_dataloader, val_dataloader = get_data_loaders(download=True, split='train', batch=32)
     print(f"Data is loaded:- ")
     # import pdb; pdb.set_trace()
     model = CNNModel()
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.AdamW(model.parameters(), lr = 1e-3)
+    optimizer = optim.AdamW(model.parameters(), lr = 1e-4)
     lossi = []
     stepi = []
     vallossi = []
     model.train()
     step = 0
-    for epoch in range(6):
+    for epoch in range(10):
         for xb, yb in train_dataloader:
             xb = xb.to(device)
             yb = yb.to(device)
@@ -105,7 +114,7 @@ if __name__ == '__main__':
             yb = yb.to('cpu')
             if step%100 == 0:
                 val_stats = validation_loss(model, val_dataloader)
-                print(f"Epoch:- {epoch}, step:- {step}, train_loss:- {loss.item()}, val_loss:- {val_stats['loss']}")
+                print(f"Epoch:- {epoch}, step:- {step}, train_loss:- {loss.item()}, val_loss:- {val_stats['loss']}, val_accuracy:- {val_stats['accuracy']}")
                 lossi.append(loss.item())
                 stepi.append(step)
                 vallossi.append(val_stats['loss'])
@@ -121,7 +130,7 @@ if __name__ == '__main__':
     plt.grid(True)
     plt.savefig('training_loss_plot.png')
     print("Plot saved as training_loss_plot.png")
-    plt.show()
+    # plt.show()
 
     test_dataloader, _ = get_data_loaders(download=True, split='valid')
     stats = validation_loss(model, test_dataloader)
