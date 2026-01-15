@@ -36,12 +36,16 @@ def preprocess_data(train_data, valid_split, batch):
 def get_data_loaders(download = False, split='train', batch=32):
     traget_data = None
     valid_split = False
+    train_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     if split=='train':
-        traget_data = torchvision.datasets.CIFAR10(root='./data_folder/', train=True, download=download, transform=transform)
+        traget_data = torchvision.datasets.CIFAR10(root='./data_folder/', train=True, download=download, transform=train_transform)
         valid_split = True
     else:
         traget_data = torchvision.datasets.CIFAR10(root='./data_folder/', train=False, download=download, transform=transform)

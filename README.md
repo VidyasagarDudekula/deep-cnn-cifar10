@@ -4,10 +4,10 @@ A Convolutional Neural Network built from scratch with PyTorch for image classif
 
 ## Results
 
-| Metric | Value |
-|--------|-------|
-| **Test Accuracy** | 71.22% |
-| **Test Loss** | 0.888 |
+| Version | Test Accuracy | Test Loss | Improvement |
+|---------|---------------|-----------|-------------|
+| v1 | 71.22% | 0.888 | — |
+| **v2 (latest)** | **74.18%** | **0.783** | **+2.96% accuracy, -11.8% loss** |
 
 ### Training Progress
 
