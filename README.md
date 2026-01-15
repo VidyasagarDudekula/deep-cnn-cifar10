@@ -18,16 +18,20 @@ A Convolutional Neural Network built from scratch with PyTorch for image classif
 ```
 Input: [B, 3, 32, 32] (RGB images)
     │
-    ├── Conv2d(3 → 64, k=4, p=1) → ReLU → BatchNorm2d → Dropout(0.1)
-    │   Output: [B, 64, 31, 31]
+    ├── ResidualBlock (with skip connection)
+    │   ├── Conv2d(3 → 64, k=1) → BatchNorm2d → ReLU
+    │   ├── Conv2d(64 → 128, k=3, p=1) → BatchNorm2d → ReLU
+    │   ├── Conv2d(128 → 256, k=3, s=2) → BatchNorm2d → ReLU
+    │   └── + Downsample(3 → 256, k=3, s=2)  ← Skip Connection
+    │   Output: [B, 256, 15, 15]
     │
-    ├── Conv2d(64 → 128, k=3) → ReLU → BatchNorm2d → AvgPool2d(k=3, s=3) → Dropout(0.1)
-    │   Output: [B, 128, 9, 9]
+    ├── AvgPool2d(k=3, s=3) → Dropout(0.1)
+    │   Output: [B, 256, 5, 5]
     │
-    ├── Flatten → [B, 10368]
+    ├── Flatten → [B, 6400]
     │
-    ├── Linear(10368 → 100) → LayerNorm → Dropout(0.1)
-    ├── Linear(100 → 50) → LayerNorm → Dropout(0.1)
+    ├── Linear(6400 → 100) → LayerNorm → ReLU → Dropout(0.1)
+    ├── Linear(100 → 50) → ReLU → LayerNorm → Dropout(0.1)
     └── Linear(50 → 10) → Output
 ```
 
