@@ -37,6 +37,7 @@ def get_data_loaders(download = False, split='train', batch=32):
     traget_data = None
     valid_split = False
     train_transform = transforms.Compose([
+        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
